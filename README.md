@@ -57,3 +57,22 @@ View your app in AI Studio: https://ai.studio/apps/c8453338-a500-40a7-967a-cfce6
 - To preload local Phasmophobia images for evidence and cursed possessions, run:
   `npm run download:phasmo-media`
 - AI search now goes through a local `/api/ai-identify` proxy served by the dev server, so the Gemini API key is not exposed to the browser bundle.
+
+## Auth Setup
+
+Authentication uses Supabase Auth because the free plan supports email/password accounts, Google OAuth, email confirmation, password recovery, and optional CAPTCHA.
+
+1. Create a free Supabase project.
+2. In `.env.local`, set:
+   `VITE_SUPABASE_URL=...`
+   `VITE_SUPABASE_ANON_KEY=...`
+3. In Supabase Auth providers, enable:
+   Email provider
+   Google provider
+4. For code-based email confirmation and password recovery, edit the Supabase email templates so the email contains the token:
+   `{{ .Token }}`
+5. Optional CAPTCHA after repeated login failures:
+   Create a free Cloudflare Turnstile widget, set `VITE_TURNSTILE_SITE_KEY=...`, then enable Turnstile in Supabase Auth settings.
+6. Add the same `VITE_` variables to Vercel project environment variables and redeploy.
+
+Do not put `SUPABASE_SERVICE_ROLE_KEY` in this frontend app.

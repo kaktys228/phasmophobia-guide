@@ -25,6 +25,8 @@ import { ProgressionTab } from './components/ProgressionTab';
 import { ExperienceCalculatorTab } from './components/ExperienceCalculatorTab';
 import { GhostListPanel } from './components/GhostListPanel';
 import { GhostInfoDialog } from './components/GhostInfoDialog';
+import { AuthButton } from './components/AuthButton';
+import { AuthProvider } from './components/AuthProvider';
 import { AnimatePresence, motion } from 'motion/react';
 import { Skull, Ghost as GhostIcon, Info, Sparkles, Loader2, Mic, Flashlight, Flame, BookOpen, Trophy, Gamepad2, Calculator as CalculatorIcon, Zap } from 'lucide-react';
 import { identifyGhost } from './services/aiClient';
@@ -45,7 +47,7 @@ import {
   matchesGhostSearch,
 } from './utils/journalFilters';
 
-export default function App() {
+function AppContent() {
   const [difficulty, setDifficulty] = useState<InvestigationDifficulty>('Professional');
   const [evidenceStates, setEvidenceStates] = useState<EvidenceStateMap>(() => createDefaultEvidenceStateMap());
   const [selectedSpeeds, setSelectedSpeeds] = useState<GhostSpeed[]>([]);
@@ -237,6 +239,10 @@ export default function App() {
                 </span>
               </TabsTrigger>
             </TabsList>
+          </div>
+
+          <div className="shrink-0">
+            <AuthButton />
           </div>
         </header>
 
@@ -541,6 +547,14 @@ export default function App() {
       </footer>
       <ScrollToTop />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
