@@ -72,7 +72,8 @@ function createMathCaptcha() {
 }
 
 function goHome() {
-  window.location.hash = '';
+  window.history.pushState({}, '', '/');
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export function AuthPage() {

@@ -49,7 +49,6 @@ import {
 } from './utils/journalFilters';
 
 function AppContent() {
-  const [route, setRoute] = useState(() => window.location.hash.replace(/^#\/?/, '') || 'home');
   const [difficulty, setDifficulty] = useState<InvestigationDifficulty>('Professional');
   const [evidenceStates, setEvidenceStates] = useState<EvidenceStateMap>(() => createDefaultEvidenceStateMap());
   const [selectedSpeeds, setSelectedSpeeds] = useState<GhostSpeed[]>([]);
@@ -63,19 +62,6 @@ function AppContent() {
   const [aiDescription, setAiDescription] = useState('');
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(window.location.hash.replace(/^#\/?/, '') || 'home');
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  if (route === 'auth') {
-    return <AuthPage />;
-  }
 
   const handleAiIdentify = async () => {
     if (!aiDescription.trim()) return;
@@ -565,10 +551,41 @@ function AppContent() {
   );
 }
 
+function getCurrentRoute() {
+  const hashRoute = window.location.hash.replace(/^#\/?/, '');
+  if (hashRoute) {
+    return hashRoute;
+  }
+
+  return window.location.pathname.replace(/^\/+/, '') || 'home';
+}
+
+function AppRouter() {
+  const [route, setRoute] = useState(() => getCurrentRoute());
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(getCurrentRoute());
+
+    window.addEventListener('hashchange', syncRoute);
+    window.addEventListener('popstate', syncRoute);
+
+    return () => {
+      window.removeEventListener('hashchange', syncRoute);
+      window.removeEventListener('popstate', syncRoute);
+    };
+  }, []);
+
+  if (route === 'auth') {
+    return <AuthPage />;
+  }
+
+  return <AppContent />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <AppRouter />
     </AuthProvider>
   );
 }

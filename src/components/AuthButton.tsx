@@ -53,7 +53,8 @@ export function AuthButton() {
     <button
       type="button"
       onClick={() => {
-        window.location.hash = 'auth';
+        window.history.pushState({}, '', '/auth');
+        window.dispatchEvent(new PopStateEvent('popstate'));
       }}
       disabled={!isAuthReady}
       className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:opacity-50"

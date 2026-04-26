@@ -1,78 +1,446 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Phasmophobia Guide
 
-# Run and deploy your AI Studio app
+Справочник по Phasmophobia с журналом призраков, фильтрами, AI-поиском, механиками, уликами, проклятыми предметами, прогрессом и страницей авторизации.
 
-This contains everything you need to run your app locally.
+## Быстрый запуск
 
-View your app in AI Studio: https://ai.studio/apps/c8453338-a500-40a7-967a-cfce6a65d038
+Требования:
 
-## Run Locally
+- Node.js 20+
+- npm
 
-**Prerequisites:** Node.js
+Установка:
 
-1. Install dependencies:
-   `npm install`
-2. Set the AI variables in `.env.local`:
-   Optional highest-priority provider: `PROXYAPI_OPENAI_API_KEY=...`
-   Optional: `PROXYAPI_OPENAI_MODEL=gpt-5-nano`
-   Optional: `PROXYAPI_OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1`
-   `GEMINI_API_KEY=...`
-   Optional: `GEMINI_MODEL=gemini-2.5-flash`
-   Optional: `GEMINI_FALLBACK_MODELS=gemini-2.5-flash-lite,gemini-2.0-flash`
-   Optional reserve provider: `GROQ_API_KEY=...`
-   Optional: `GROQ_MODEL=openai/gpt-oss-20b`
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+```
 
-## Gemini Notes
+Запуск локально:
 
-- For the free Gemini Developer API flow in this project, the main required secret is `GEMINI_API_KEY`.
-- If you want a higher-priority provider before Gemini, you can set `PROXYAPI_OPENAI_API_KEY` and the app will try ProxyAPI/OpenAI first.
-- The default ProxyAPI/OpenAI model in this project is `gpt-5-nano` because it is the cheapest GPT-5 model in the OpenAI pricing table and it is listed by ProxyAPI among supported OpenAI models.
-- ProxyAPI/OpenAI uses the OpenAI-compatible endpoint `https://api.proxyapi.ru/openai/v1`.
-- For Gemini-only fallbacks you do not need any extra Google secret. The app can automatically switch to reserve Gemini models from `GEMINI_FALLBACK_MODELS` using the same key.
-- If you also want an external reserve provider after Gemini quotas/errors, add `GROQ_API_KEY`.
-- You do not need Yandex-style `folderId` or `modelUri`.
-- Grounded search is done server-side through the local `/api/ai-identify` proxy, so the key is not exposed to the browser bundle.
-- Gemini Developer API also requires that requests come from a supported country/IP. If you see `User location is not supported for the API use`, the key is valid but the request origin is blocked by Google region policy.
-- Current fallback order in the app:
-  `ProxyAPI/OpenAI primary model -> Gemini primary model -> Gemini fallback models -> Groq reserve model -> local heuristic analysis`
-- Official docs:
-  `https://proxyapi.ru/docs/openai-text-generation`
-  `https://proxyapi.ru/docs/openai-models`
-  `https://proxyapi.ru/docs/openai-compatible-api`
-  `https://ai.google.dev/gemini-api/docs/api-key`
-  `https://ai.google.dev/gemini-api/docs/quota`
-  `https://ai.google.dev/gemini-api/docs/google-search`
-  `https://ai.google.dev/gemini-api/docs/available-regions`
-  `https://ai.google.dev/gemini-api/docs/pricing`
-  `https://console.groq.com/docs/openai`
-  `https://console.groq.com/docs/rate-limits`
+```bash
+npm run dev
+```
 
-## Windows Notes
+Адрес локального сайта:
 
-- If PowerShell blocks `npm` with an execution policy error, use `npm.cmd install` and `npm.cmd run dev`.
-- To preload local Phasmophobia images for evidence and cursed possessions, run:
-  `npm run download:phasmo-media`
-- AI search now goes through a local `/api/ai-identify` proxy served by the dev server, so the Gemini API key is not exposed to the browser bundle.
+```txt
+http://localhost:3000
+```
 
-## Auth Setup
+Страница авторизации:
 
-Authentication uses Supabase Auth because the free plan supports email/password accounts, Google OAuth, email confirmation, password recovery, and optional CAPTCHA.
+```txt
+http://localhost:3000/auth
+```
 
-1. Create a free Supabase project.
-2. In `.env.local`, set:
-   `VITE_SUPABASE_URL=...`
-   `VITE_SUPABASE_ANON_KEY=...`
-3. In Supabase Auth providers, enable:
-   Email provider
-   Google provider
-4. For code-based email confirmation and password recovery, edit the Supabase email templates so the email contains the token:
-   `{{ .Token }}`
-5. Optional CAPTCHA after repeated login failures:
-   Create a free Cloudflare Turnstile widget, set `VITE_TURNSTILE_SITE_KEY=...`, then enable Turnstile in Supabase Auth settings.
-6. Add the same `VITE_` variables to Vercel project environment variables and redeploy.
+## Переменные окружения
 
-Do not put `SUPABASE_SERVICE_ROLE_KEY` in this frontend app.
+Создайте файл `.env.local` и заполните нужные значения.
+
+Минимально для Supabase Auth:
+
+```env
+VITE_SUPABASE_URL="https://aeodtbnqzyflivktsluo.supabase.co"
+VITE_SUPABASE_ANON_KEY="ваш_publishable_или_anon_key"
+```
+
+Для AI-поиска:
+
+```env
+PROXYAPI_OPENAI_API_KEY=""
+PROXYAPI_OPENAI_MODEL="gpt-5-nano"
+PROXYAPI_OPENAI_BASE_URL="https://api.proxyapi.ru/openai/v1"
+
+GEMINI_API_KEY=""
+GEMINI_MODEL="gemini-2.5-flash"
+GEMINI_FALLBACK_MODELS="gemini-2.5-flash-lite,gemini-2.0-flash"
+
+GROQ_API_KEY=""
+GROQ_MODEL="openai/gpt-oss-20b"
+```
+
+Для настоящей CAPTCHA через Cloudflare Turnstile:
+
+```env
+VITE_TURNSTILE_SITE_KEY=""
+```
+
+Важно: `VITE_` переменные видны в браузере. Не добавляйте в frontend `SUPABASE_SERVICE_ROLE_KEY`, Google client secret, Turnstile secret key или другие server-side секреты.
+
+## Что умеет авторизация
+
+Сейчас реализовано:
+
+- отдельная страница `/auth`;
+- вход через логин или почту + пароль;
+- регистрация через логин, пароль, почту, имя и фото;
+- вход через Google;
+- подтверждение почты кодом;
+- восстановление пароля кодом из письма;
+- CAPTCHA после 7 неудачных попыток входа;
+- аватар пользователя в шапке сайта.
+
+Важное ограничение: Supabase Auth нативно входит по email, а не по username. В проекте логин работает через локальное соответствие `логин -> email`, которое сохраняется после регистрации в браузере пользователя. Если пользователь входит с другого устройства, он должен ввести почту вместо логина. Для полноценного глобального входа по логину нужна отдельная таблица `profiles` и серверный endpoint.
+
+## Подробная настройка Supabase
+
+Откройте проект:
+
+```txt
+https://supabase.com/dashboard/project/aeodtbnqzyflivktsluo
+```
+
+### 1. URL Configuration
+
+Перейдите:
+
+```txt
+Authentication -> URL Configuration
+```
+
+В `Site URL` укажите production-адрес:
+
+```txt
+https://phasmahpobia.vercel.app
+```
+
+В `Redirect URLs` добавьте:
+
+```txt
+https://phasmahpobia.vercel.app/**
+http://localhost:3000/**
+```
+
+Сохраните изменения.
+
+### 2. Email/password вход
+
+Перейдите:
+
+```txt
+Authentication -> Sign In / Providers
+```
+
+Откройте провайдер `Email`.
+
+Включите:
+
+- `Enable Email provider`
+- `Confirm email`
+
+Сохраните изменения.
+
+### 3. Google OAuth
+
+В Supabase перейдите:
+
+```txt
+Authentication -> Sign In / Providers -> Google
+```
+
+Включите:
+
+```txt
+Enable Sign in with Google
+```
+
+Скопируйте callback URL из Supabase. Для текущего проекта он такой:
+
+```txt
+https://aeodtbnqzyflivktsluo.supabase.co/auth/v1/callback
+```
+
+Дальше откройте Google Cloud:
+
+```txt
+https://console.cloud.google.com/apis/credentials
+```
+
+Настройте OAuth consent screen:
+
+- User Type: `External`
+- App name: `Phasmophobia Guide`
+- User support email: ваша почта
+- Developer contact email: ваша почта
+- Scopes можно не добавлять
+
+Создайте OAuth Client:
+
+```txt
+Create Credentials -> OAuth client ID
+```
+
+Настройки:
+
+- Application type: `Web application`
+- Name: `Phasmophobia Guide`
+
+Authorized JavaScript origins:
+
+```txt
+https://phasmahpobia.vercel.app
+http://localhost:3000
+```
+
+Authorized redirect URIs:
+
+```txt
+https://aeodtbnqzyflivktsluo.supabase.co/auth/v1/callback
+```
+
+После создания Google выдаст:
+
+- `Client ID`
+- `Client Secret`
+
+Вставьте их в Supabase:
+
+- `Client IDs` = Google `Client ID`
+- `Client Secret (for OAuth)` = Google `Client Secret`
+
+Сохраните изменения.
+
+### 4. Email templates с кодами
+
+Перейдите:
+
+```txt
+Authentication -> Email -> Templates
+```
+
+Откройте `Confirm sign up`.
+
+В `Body` вставьте:
+
+```html
+<h2>Подтверждение регистрации</h2>
+<p>Ваш код подтверждения:</p>
+<h1>{{ .Token }}</h1>
+<p>Введите этот код на сайте Phasmophobia Guide.</p>
+```
+
+Сохраните.
+
+Откройте `Reset password`.
+
+В `Body` вставьте:
+
+```html
+<h2>Восстановление пароля</h2>
+<p>Ваш код восстановления:</p>
+<h1>{{ .Token }}</h1>
+<p>Введите этот код на сайте и задайте новый пароль.</p>
+```
+
+Сохраните.
+
+Ключевой момент: в письме обязательно должен быть `{{ .Token }}`. Без него сайту нечего вводить в поле кода.
+
+### 5. Storage для фото профиля
+
+Чтобы загрузка фото при регистрации работала, создайте bucket.
+
+Перейдите:
+
+```txt
+Storage -> New bucket
+```
+
+Создайте bucket:
+
+```txt
+avatars
+```
+
+Рекомендуемо включить `Public bucket`, чтобы аватары можно было показывать в интерфейсе.
+
+Затем перейдите:
+
+```txt
+Storage -> Policies -> avatars
+```
+
+Добавьте политики для authenticated users.
+
+Минимальный вариант через SQL Editor:
+
+```sql
+create policy "Users can upload own avatars"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Users can update own avatars"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Avatar files are publicly readable"
+on storage.objects
+for select
+to public
+using (bucket_id = 'avatars');
+```
+
+Если bucket не создать, регистрация всё равно будет работать, но фото не загрузится.
+
+### 6. CAPTCHA через Cloudflare Turnstile
+
+Без Turnstile сайт использует простую локальную проверку после 7 ошибок входа. Это не полноценная защита от ботов.
+
+Для нормальной CAPTCHA:
+
+1. Откройте Cloudflare Turnstile:
+
+```txt
+https://dash.cloudflare.com/?to=/:account/turnstile
+```
+
+2. Создайте widget:
+
+- Widget name: `Phasmophobia Guide`
+- Hostname: `phasmahpobia.vercel.app`
+- Hostname для локалки: `localhost`
+- Widget mode: `Managed`
+
+3. Cloudflare выдаст:
+
+- `Site key`
+- `Secret key`
+
+4. `Site key` добавьте в `.env.local`:
+
+```env
+VITE_TURNSTILE_SITE_KEY="site_key_из_cloudflare"
+```
+
+5. `Site key` добавьте в Vercel:
+
+```txt
+Vercel -> Project -> Settings -> Environment Variables
+```
+
+Name:
+
+```txt
+VITE_TURNSTILE_SITE_KEY
+```
+
+Environment:
+
+```txt
+Production
+Development
+```
+
+6. `Secret key` добавьте только в Supabase:
+
+```txt
+Authentication -> Attack Protection
+```
+
+Найдите CAPTCHA / Bot protection, выберите Cloudflare Turnstile и вставьте `Secret key`.
+
+Secret key нельзя добавлять в frontend и нельзя хранить как `VITE_` переменную.
+
+### 7. Vercel env
+
+В Vercel должны быть переменные:
+
+```txt
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+VITE_TURNSTILE_SITE_KEY
+```
+
+После изменения env нужно сделать redeploy.
+
+## Деплой
+
+Проект подключён к GitHub и Vercel. После push в `main` Vercel запускает production deploy.
+
+Production URL:
+
+```txt
+https://phasmahpobia.vercel.app
+```
+
+## Проверка
+
+Проверка TypeScript:
+
+```bash
+npm run lint
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Локальный preview:
+
+```bash
+npm run preview
+```
+
+## Частые проблемы
+
+### После нажатия `Войти` пустая страница
+
+Причина была в роутинге React: переход на auth-страницу менял порядок hooks. Исправлено: auth-страница теперь рендерится на уровне корневого router.
+
+Если всё ещё пусто:
+
+- перезапустите dev server;
+- откройте `http://localhost:3000/auth`;
+- проверьте консоль браузера;
+- выполните `npm run build`.
+
+### Google login не работает
+
+Проверьте:
+
+- Google provider включён в Supabase;
+- Client ID и Client Secret вставлены в Supabase;
+- redirect URI в Google Cloud совпадает с Supabase callback URL;
+- в Supabase `URL Configuration` указан правильный `Site URL`.
+
+### Код на почту не приходит
+
+Проверьте:
+
+- `Confirm email` включён;
+- в шаблоне есть `{{ .Token }}`;
+- письмо не попало в спам;
+- встроенная почта Supabase на free plan имеет лимиты.
+
+### Фото профиля не грузится
+
+Проверьте:
+
+- bucket называется строго `avatars`;
+- bucket public;
+- есть storage policies для upload/select.
+
+## Полезные ссылки
+
+- Supabase Auth: https://supabase.com/docs/guides/auth
+- Supabase Google OAuth: https://supabase.com/docs/guides/auth/social-login/auth-google
+- Supabase Email Templates: https://supabase.com/docs/guides/auth/auth-email-templates
+- Supabase CAPTCHA: https://supabase.com/docs/guides/auth/auth-captcha
+- Cloudflare Turnstile: https://developers.cloudflare.com/turnstile/
+- Vercel Environment Variables: https://vercel.com/docs/environment-variables
