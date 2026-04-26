@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GHOSTS } from './data/ghosts';
 import {
   Evidence,
@@ -26,6 +26,7 @@ import { ExperienceCalculatorTab } from './components/ExperienceCalculatorTab';
 import { GhostListPanel } from './components/GhostListPanel';
 import { GhostInfoDialog } from './components/GhostInfoDialog';
 import { AuthButton } from './components/AuthButton';
+import { AuthPage } from './components/AuthPage';
 import { AuthProvider } from './components/AuthProvider';
 import { AnimatePresence, motion } from 'motion/react';
 import { Skull, Ghost as GhostIcon, Info, Sparkles, Loader2, Mic, Flashlight, Flame, BookOpen, Trophy, Gamepad2, Calculator as CalculatorIcon, Zap } from 'lucide-react';
@@ -48,6 +49,7 @@ import {
 } from './utils/journalFilters';
 
 function AppContent() {
+  const [route, setRoute] = useState(() => window.location.hash.replace(/^#\/?/, '') || 'home');
   const [difficulty, setDifficulty] = useState<InvestigationDifficulty>('Professional');
   const [evidenceStates, setEvidenceStates] = useState<EvidenceStateMap>(() => createDefaultEvidenceStateMap());
   const [selectedSpeeds, setSelectedSpeeds] = useState<GhostSpeed[]>([]);
@@ -61,6 +63,19 @@ function AppContent() {
   const [aiDescription, setAiDescription] = useState('');
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setRoute(window.location.hash.replace(/^#\/?/, '') || 'home');
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  if (route === 'auth') {
+    return <AuthPage />;
+  }
 
   const handleAiIdentify = async () => {
     if (!aiDescription.trim()) return;
